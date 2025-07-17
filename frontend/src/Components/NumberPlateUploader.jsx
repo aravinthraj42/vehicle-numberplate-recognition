@@ -1,38 +1,25 @@
-// src/NumberPlateUploader.jsx
-import { useState } from "react";
+// frontend/src/components/UploadForm.jsx
+import { useState } from 'react';
+import axios from 'axios';
 
-export default function NumberPlateUploader() {
+function UploadForm() {
   const [file, setFile] = useState(null);
+  const [result, setResult] = useState('');
 
-  const handleFileUpload = async (event) => {
-    const selectedFile = event.target.files[0];
-    setFile(selectedFile);
-
+  const handleUpload = async () => {
     const formData = new FormData();
-    formData.append("image", selectedFile);
-
-    try {
-      const response = await fetch("http://localhost:5000/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await response.json();
-      console.log("Server Response:", data);
-    } catch (error) {
-      console.error("Error uploading file:", error);
-    }
+    formData.append('file', file);
+    const res = await axios.post('http://localhost:5000/detect', formData);
+    setResult(res.data.plate_number || res.data.error);
   };
 
   return (
-    <div className="p-4 max-w-md mx-auto">
-      <h2 className="text-2xl font-bold mb-4">Upload Number Plate Image</h2>
-      <input
-        type="file"
-        accept="image/*"
-        onChange={handleFileUpload}
-        className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
-      />
+    <div>
+      <input type="file" onChange={e => setFile(e.target.files[0])} />
+      <button onClick={handleUpload}>Upload</button>
+      <p>Result: {result}</p>
     </div>
   );
 }
+
+export default UploadForm;
