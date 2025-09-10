@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from detector import detect_plate
-from db import create_db, insert_entry
+from db import create_db, insert_entry, get_open_entry, update_exit, calculate_fee
 from werkzeug.utils import secure_filename
 from datetime import datetime
 import os
@@ -45,21 +45,42 @@ def detect():
 
         logger.info("Calling detect_plate function")
         plate_number = detect_plate(path)
+
         if plate_number:
-            entry_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            logger.info(f"Plate detected: {plate_number}, saving to database")
-            insert_entry(plate_number, entry_time)
-            os.remove(path)  # Clean up uploaded file
-            logger.info(f"File {path} deleted")
-            return jsonify({'plate_number': plate_number, 'entry_time': entry_time})
+            plate_number = plate_number.upper().strip()
+            existing_entry = get_open_entry(plate_number)
+            current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+            if existing_entry:
+                # Handle exit
+                plate_id, entry_time = existing_entry
+                fee = calculate_fee(entry_time, current_time)
+                update_exit(plate_id, current_time, fee)
+                os.remove(path)
+                logger.info(f"Exit recorded for {plate_number}")
+                return jsonify({
+                    'plate_number': plate_number,
+                    'entry_time': entry_time,
+                    'exit_time': current_time,
+                    'fee': fee
+                })
+            else:
+                # Handle new entry
+                insert_entry(plate_number, current_time)
+                os.remove(path)
+                logger.info(f"New entry recorded for {plate_number}")
+                return jsonify({
+                    'plate_number': plate_number,
+                    'entry_time': current_time
+                })
         else:
-            logger.error("No plate detected in image")
-            os.remove(path)  # Clean up even on failure
-            return jsonify({'error': 'Plate not detected'}), 400
+            os.remove(path)
+            logger.warning("Plate not detected or invalid format")
+            return jsonify({'error': 'Plate not detected or invalid format'}), 400
 
     except Exception as e:
         logger.error(f"Error in /detect: {str(e)}")
-        if os.path.exists(path):
+        if 'path' in locals() and os.path.exists(path):
             os.remove(path)  # Clean up on error
         return jsonify({'error': f'Server error: {str(e)}'}), 500
 

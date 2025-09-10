@@ -5,6 +5,8 @@ function NumberPlateUploader() {
   const [file, setFile] = useState(null);
   const [result, setResult] = useState('');
   const [entryTime, setEntryTime] = useState('');
+  const [exitTime, setExitTime] = useState('');
+  const [fare, setFare] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -13,10 +15,14 @@ function NumberPlateUploader() {
       setError('Please select a file.');
       return;
     }
+
     setLoading(true);
     setError('');
     setResult('');
     setEntryTime('');
+    setExitTime('');
+    setFare(null);
+
     try {
       const formData = new FormData();
       formData.append('file', file);
@@ -27,7 +33,10 @@ function NumberPlateUploader() {
 
       if (res.data.plate_number) {
         setResult(res.data.plate_number);
-        setEntryTime(res.data.entry_time);
+        setEntryTime(res.data.entry_time || '');
+        setExitTime(res.data.exit_time || '');
+        setFare(res.data.fee ?? null);
+        setFile(null); // <-- clear after successful detection
       } else {
         setError(res.data.error || 'Failed to detect plate.');
       }
@@ -58,13 +67,15 @@ function NumberPlateUploader() {
             {loading ? 'Processing...' : 'Detect Plate'}
           </button>
           {error && <p className="text-red-500 mt-2">{error}</p>}
-        {result && (
-        <div className="mt-4 p-4 border rounded bg-gray-50 text-black">
-          <p><strong>Plate Number:</strong> {result}</p>
-          <p><strong>Entry Time:</strong> {entryTime}</p>
-        </div>
-        )}
 
+          {result && (
+            <div className="mt-4 p-4 border rounded bg-gray-50 text-black space-y-2">
+              <p><strong>Plate Number:</strong> {result}</p>
+              <p><strong>Entry Time:</strong> {entryTime}</p>
+              {exitTime && <p><strong>Exit Time:</strong> {exitTime}</p>}
+              {fare !== null && <p><strong>Fare:</strong> ₹{fare}</p>}
+            </div>
+          )}
         </div>
 
         {file && (
