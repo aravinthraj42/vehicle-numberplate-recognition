@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from detector import detect_plate
-from db import create_db, insert_entry, get_open_entry, update_exit, calculate_fee
+from db import create_db, insert_entry, get_open_entry, update_exit, calculate_fee, authenticate_user
 from werkzeug.utils import secure_filename
 from datetime import datetime
 import os
@@ -105,6 +105,39 @@ def get_logs():
     except Exception as e:
         logger.error(f"Error fetching logs: {str(e)}")
         return jsonify({'error': f'Failed to fetch logs: {str(e)}'}), 500
+
+@app.route('/login', methods=['POST'])
+def login():
+    """Authenticate user login."""
+    logger.info("Received login request")
+    try:
+        data = request.get_json()
+        
+        if not data or 'email' not in data or 'password' not in data:
+            logger.error("Missing email or password in request")
+            return jsonify({'error': 'Email and password are required'}), 400
+        
+        email = data['email'].strip()
+        password = data['password']
+        
+        logger.info(f"Attempting login for email: {email}")
+        
+        # Authenticate user
+        user = authenticate_user(email, password)
+        
+        if user:
+            logger.info(f"Login successful for user: {email}")
+            return jsonify({
+                'message': 'Login successful',
+                'user': user
+            }), 200
+        else:
+            logger.warning(f"Login failed for email: {email}")
+            return jsonify({'error': 'Invalid email or password'}), 401
+            
+    except Exception as e:
+        logger.error(f"Error in login: {str(e)}")
+        return jsonify({'error': f'Server error: {str(e)}'}), 500
 
 if __name__ == '__main__':
     logger.info("Starting Flask server")

@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
 
-export default function Home() {
+export default function Home({ isAuthenticated }) {
   const navigate = useNavigate();
 
   // Auto redirect to NumberPlateUploader after 5 seconds
@@ -38,12 +38,14 @@ export default function Home() {
         >
           Fare Details
         </Link>
-        <Link
-          to="/reports"
-          className="bg-purple-600 text-white px-6 py-3 rounded-lg shadow-lg hover:bg-purple-700 transition"
-        >
-          Reports
-        </Link>
+        {isAuthenticated && (
+          <Link
+            to="/reports"
+            className="bg-purple-600 text-white px-6 py-3 rounded-lg shadow-lg hover:bg-purple-700 transition"
+          >
+            Reports
+          </Link>
+        )}
       </div>
 
       {/* <p className="mt-6 text-sm text-gray-300">

@@ -3,7 +3,6 @@ const mockFareData = [
   { duration: '2 hours', rate: '₹15' },
   { duration: '3 hours', rate: '₹20' },
   { duration: '6 hours', rate: '₹35' },
-  { duration: '12 hours', rate: '₹65' },
   { duration: '1 day', rate: '₹40' },
   { duration: '2 days', rate: '₹65' },
   { duration: '3 days', rate: '₹90' },
